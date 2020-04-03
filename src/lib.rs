@@ -1,44 +1,34 @@
 mod timestamp;
+mod logger;
 
-use crate::timestamp::get_timestamp;
-
-pub fn log_info(msg: &str) {
-    println!("[INFO-{}]: {}", get_timestamp(), msg);
-}
-
-pub fn log_debug(msg: &str) {
-    println!("[DEBUG-{}]: {}", get_timestamp(), msg);
-}
-
-pub fn log_warning(msg: &str) {
-    println!("[WARNING-{}]: {}", get_timestamp(), msg);
-}
-
-pub fn log_error(msg: &str) {
-    println!("[ERROR-{}]: {}", get_timestamp(), msg);
-}
+pub use logger::Logger;
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::io;
 
     #[test]
-    fn info() {
-        log_info("this is an info.");
+    fn info() -> io::Result<()> {
+        let mut log = Logger::new();
+        log.info("this is an info.")
     }
 
     #[test]
-    fn debug() {
-        log_debug("this is a debug.");
+    fn debug() -> io::Result<()> {
+        let mut log = Logger::new();
+        log.debug("this is a debug.")
     }
 
     #[test]
-    fn error() {
-        log_error("this is an error.");
+    fn error() -> io::Result<()> {
+        let mut log = Logger::new();
+        log.error("this is an error.")
     }
 
     #[test]
-    fn warning() {
-        log_warning("this is a warning.");
+    fn warning() -> io::Result<()> {
+        let mut log = Logger::new();
+        log.warning("this is a warning.")
     }
 }
