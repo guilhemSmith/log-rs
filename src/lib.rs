@@ -36,10 +36,10 @@ mod tests {
     #[test]
     fn all_separate_output() -> io::Result<()> {
         let mut log = Logger::new()?;
-        log.set_output_info(OutputKind::FILE("infolog.txt"))?;
-        log.set_output_debug(OutputKind::FILE("debuglog.txt"))?;
-        log.set_output_error(OutputKind::FILE("errorlog.txt"))?;
-        log.set_output_warning(OutputKind::FILE("warninglog.txt"))?;
+        log.config_info(OutputKind::FILE("infolog.txt"))?;
+        log.config_debug(OutputKind::FILE("debuglog.txt"))?;
+        log.config_error(OutputKind::FILE("errorlog.txt"))?;
+        log.config_warning(OutputKind::FILE("warninglog.txt"))?;
         log.info("this is an info.")?;
         log.debug("this is a debug.")?;
         log.error("this is an error.")?;
@@ -50,10 +50,10 @@ mod tests {
     #[test]
     fn all_same_output() -> io::Result<()> {
         let mut log = Logger::new()?;
-        log.set_output_info(OutputKind::FILE("log.txt"))?;
-        log.set_output_debug(OutputKind::FILE("log.txt"))?;
-        log.set_output_error(OutputKind::FILE("log.txt"))?;
-        log.set_output_warning(OutputKind::FILE("log.txt"))?;
+        log.config_info(OutputKind::FILE("log.txt"))?;
+        log.config_debug(OutputKind::FILE("log.txt"))?;
+        log.config_error(OutputKind::FILE("log.txt"))?;
+        log.config_warning(OutputKind::FILE("log.txt"))?;
         log.info("this is an info.")?;
         log.debug("this is a debug.")?;
         log.error("this is an error.")?;
