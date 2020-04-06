@@ -1,19 +1,18 @@
-
-use std::io::{self, Write};
-use std::fs::OpenOptions;
 use super::OutputKind;
+use std::fs::OpenOptions;
+use std::io::{self, Write};
 
 /// Can log messages on its output and memorize the count of logger which rely on it.
 pub struct WriteBuffer {
     count: usize,
-    output: Box<dyn Write>
+    output: Box<dyn Write>,
 }
 
 impl WriteBuffer {
-    pub fn new(output: &OutputKind, options: &OpenOptions) ->io::Result<Self> {
+    pub fn new(output: &OutputKind, options: &OpenOptions) -> io::Result<Self> {
         Ok(WriteBuffer {
             count: 1,
-            output: get_write_buffer(&output, options)?
+            output: get_write_buffer(&output, options)?,
         })
     }
 
@@ -30,8 +29,7 @@ impl WriteBuffer {
         if self.count > 1 {
             self.count -= 1;
             return false;
-        }
-        else {
+        } else {
             self.count = 0;
             return true;
         }
@@ -39,14 +37,14 @@ impl WriteBuffer {
 }
 
 /// Create an output to write on depending on the kind of output asked.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `kind` - the kind of output to be created.
 /// * `option` - a reference to an OpenOptions used to open the file if necessary.
-/// 
+///
 /// # Return Value
-/// 
+///
 /// The output that can be write on if the function succeeded a success, the io error otherwise.
 fn get_write_buffer(kind: &OutputKind, option: &OpenOptions) -> io::Result<Box<dyn Write>> {
     Ok(match kind {

@@ -1,13 +1,13 @@
-mod write_buffer;
 mod enums;
+mod write_buffer;
 
-pub use enums::{OutputKind, Level};
+pub use enums::{Level, OutputKind};
 pub use write_buffer::WriteBuffer;
 
 use crate::timestamp::get_timestamp;
-use std::io;
-use std::fs::OpenOptions;
 use std::collections::HashMap;
+use std::fs::OpenOptions;
+use std::io;
 
 pub struct Logger<'o> {
     file_options: OpenOptions,
@@ -49,13 +49,13 @@ impl<'o> Logger<'o> {
             None => {
                 let buffer = WriteBuffer::new(&kind, &self.file_options)?;
                 self.write_buffers.insert(kind.clone(), buffer);
-            },
-            Some(buffer) => buffer.increase_count()
+            }
+            Some(buffer) => buffer.increase_count(),
         };
         let output = self.level_outputs.get_mut(&level).unwrap();
         if match self.write_buffers.get_mut(output) {
             None => false,
-            Some(buffer) => buffer.decrease_count()
+            Some(buffer) => buffer.decrease_count(),
         } {
             self.write_buffers.remove(output);
         }
@@ -80,7 +80,10 @@ impl<'o> Logger<'o> {
     }
 
     fn write_log(&mut self, msg: &str, level: Level) -> io::Result<()> {
-        if let Some(buffer) = self.write_buffers.get_mut(self.level_outputs.get(&level).unwrap()) {
+        if let Some(buffer) = self
+            .write_buffers
+            .get_mut(self.level_outputs.get(&level).unwrap())
+        {
             buffer.log(format!("[{}-{}]: {}\n", level, get_timestamp(), msg))?;
         };
         Ok(())
@@ -102,4 +105,3 @@ impl<'o> Logger<'o> {
         self.write_log(msg, Level::ERROR)
     }
 }
-

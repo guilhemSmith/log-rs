@@ -1,5 +1,5 @@
-mod timestamp;
 mod logger;
+mod timestamp;
 
 pub use logger::{Logger, OutputKind};
 
@@ -8,7 +8,6 @@ mod tests {
     use super::*;
     use std::io;
 
-    
     #[test]
     fn info() -> io::Result<()> {
         let mut log = Logger::new()?;
@@ -60,5 +59,4 @@ mod tests {
         log.warning("this is a warning.")?;
         Ok(())
     }
-    
 }
