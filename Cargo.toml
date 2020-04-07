@@ -1,12 +1,12 @@
 [package]
-name = "logrs"
+name = "log-rs"
 version = "0.1.0"
 authors = ["guilhem smith <smith.guilhem@gmail.com>"]
 edition = "2018"
 license = "MIT"
 readme = "README.md"
 description = "A small logging library written in rust."
-repository = "https://github.com/guilhemSmith/logrs"
+repository = "https://github.com/guilhemSmith/log-rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

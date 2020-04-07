@@ -1,4 +1,4 @@
-# logrs
+# log-rs
 
 A small logging library written in rust.  
 Can log on 4 level: `INFO`, `DEBUG`, `WARNING`, and `ERROR`.  
