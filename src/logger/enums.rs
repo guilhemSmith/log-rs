@@ -8,6 +8,7 @@ pub enum OutputKind<'f> {
     FILE(&'f str),
 }
 
+/// Identify the level of the log.
 #[derive(Eq, PartialEq, Hash)]
 pub enum Level {
     INFO,

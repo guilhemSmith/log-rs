@@ -9,6 +9,8 @@ use std::collections::HashMap;
 use std::fs::OpenOptions;
 use std::io;
 
+/// A logger that can log messages on different level to different output.  
+/// The output of each level can be configured to eventually be same for all, or unique.
 pub struct Logger<'o> {
     file_options: OpenOptions,
     level_outputs: HashMap<Level, OutputKind<'o>>,
@@ -16,7 +18,14 @@ pub struct Logger<'o> {
 }
 
 impl<'o> Logger<'o> {
-    pub fn new() -> io::Result<Self> {
+    /// Create a new logger.
+    /// By default, `INFO` and `DEBUG` are writting to `stdout`,
+    /// and `WARNING` and `ERROR` write to `stderr`.
+    ///
+    /// # Return Value
+    ///
+    /// The new logger if the function succeeded, `None` otherwise.
+    pub fn new() -> Option<Self> {
         let mut options = OpenOptions::new();
         options.write(true).create(true);
 
@@ -26,8 +35,16 @@ impl<'o> Logger<'o> {
         map_level.insert(Level::WARNING, OutputKind::STDERR);
         map_level.insert(Level::ERROR, OutputKind::STDERR);
 
-        let mut stdout = WriteBuffer::new(&OutputKind::STDOUT, &options)?;
-        let mut stderr = WriteBuffer::new(&OutputKind::STDERR, &options)?;
+        let mut stdout = if let Ok(buff) = WriteBuffer::new(&OutputKind::STDOUT, &options) {
+            buff
+        } else {
+            return None;
+        };
+        let mut stderr = if let Ok(buff) = WriteBuffer::new(&OutputKind::STDERR, &options) {
+            buff
+        } else {
+            return None;
+        };
         stdout.increase_count();
         stderr.increase_count();
 
@@ -41,9 +58,19 @@ impl<'o> Logger<'o> {
             write_buffers: map_buffer,
         };
 
-        return Ok(log);
+        return Some(log);
     }
 
+    /// Configure the output of the given level.  
+    ///
+    /// # Arguments
+    ///
+    /// * `kind` - The new output kind to be used by the level.
+    /// * `level` - The level to configure.
+    ///
+    /// # Return Value
+    ///
+    /// The io error if something went wrong and the configuration was not possible.
     fn config_output(&mut self, kind: OutputKind<'o>, level: Level) -> io::Result<()> {
         match self.write_buffers.get_mut(&kind) {
             None => {
@@ -63,45 +90,107 @@ impl<'o> Logger<'o> {
         Ok(())
     }
 
-    pub fn config_info(&mut self, kind: OutputKind<'o>) -> io::Result<()> {
-        self.config_output(kind, Level::INFO)
+    /// Configure the output for `INFO`.  
+    ///
+    /// # Arguments
+    ///
+    /// * `kind` - The new output kind to be used by the info.
+    pub fn config_info(&mut self, kind: OutputKind<'o>) {
+        if let Err(err) = self.config_output(kind, Level::INFO) {
+            self.error(&format!("Failed to configure INFO: {}", err));
+        }
     }
 
-    pub fn config_debug(&mut self, kind: OutputKind<'o>) -> io::Result<()> {
-        self.config_output(kind, Level::DEBUG)
+    /// Configure the output for `DEBUG`.  
+    ///
+    /// # Arguments
+    ///
+    /// * `kind` - The new output kind to be used by the debug.
+    pub fn config_debug(&mut self, kind: OutputKind<'o>) {
+        if let Err(err) = self.config_output(kind, Level::DEBUG) {
+            self.error(&format!("Failed to configure DEBUG: {}", err));
+        }
     }
 
-    pub fn config_warning(&mut self, kind: OutputKind<'o>) -> io::Result<()> {
-        self.config_output(kind, Level::WARNING)
+    /// Configure the output for `WARNING`.  
+    ///
+    /// # Arguments
+    ///
+    /// * `kind` - The new output kind to be used by the warning.
+    pub fn config_warning(&mut self, kind: OutputKind<'o>) {
+        if let Err(err) = self.config_output(kind, Level::WARNING) {
+            self.error(&format!("Failed to configure WARNING: {}", err));
+        }
     }
 
-    pub fn config_error(&mut self, kind: OutputKind<'o>) -> io::Result<()> {
-        self.config_output(kind, Level::ERROR)
+    /// Configure the output for `ERROR`.  
+    ///
+    /// # Arguments
+    ///
+    /// * `kind` - The new output kind to be used by the error.
+    pub fn config_error(&mut self, kind: OutputKind<'o>) {
+        if let Err(err) = self.config_output(kind, Level::ERROR) {
+            self.error(&format!("Failed to configure ERROR: {}", err));
+        }
     }
 
-    fn write_log(&mut self, msg: &str, level: Level) -> io::Result<()> {
+    /// Send a message on the given level.  
+    ///
+    /// # Arguments
+    ///
+    /// * `msg` - The message to write.
+    /// * `level` - The level to write on.
+    ///
+    /// # Return Value
+    ///
+    /// The io error if something went wrong and the logging was not possible.
+    fn write_log(&mut self, msg: &str, level: Level) {
         if let Some(buffer) = self
             .write_buffers
             .get_mut(self.level_outputs.get(&level).unwrap())
         {
-            buffer.log(format!("[{}-{}]: {}\n", level, get_timestamp(), msg))?;
+            if let Err(err) = buffer.log(format!("[{}-{}]: {}\n", level, get_timestamp(), msg)) {
+                match level {
+                    Level::ERROR => {}
+                    _ => self.error(&format!("Failed to log to `{}`: {}", level, err)),
+                }
+            };
         };
-        Ok(())
     }
 
-    pub fn info(&mut self, msg: &str) -> io::Result<()> {
-        self.write_log(msg, Level::INFO)
+    /// Send a message on `INFO`.
+    ///
+    /// # Arguments
+    ///
+    /// * `msg` - The message to write on `INFO`.
+    pub fn info(&mut self, msg: &str) {
+        self.write_log(msg, Level::INFO);
     }
 
-    pub fn debug(&mut self, msg: &str) -> io::Result<()> {
-        self.write_log(msg, Level::DEBUG)
+    /// Send a message on `DEBUG`.
+    ///
+    /// # Arguments
+    ///
+    /// * `msg` - The message to write on `DEBUG`.
+    pub fn debug(&mut self, msg: &str) {
+        self.write_log(msg, Level::DEBUG);
     }
 
-    pub fn warning(&mut self, msg: &str) -> io::Result<()> {
-        self.write_log(msg, Level::WARNING)
+    /// Send a message on `WARNING`.
+    ///
+    /// # Arguments
+    ///
+    /// * `msg` - The message to write on `WARNING`.
+    pub fn warning(&mut self, msg: &str) {
+        self.write_log(msg, Level::WARNING);
     }
 
-    pub fn error(&mut self, msg: &str) -> io::Result<()> {
-        self.write_log(msg, Level::ERROR)
+    /// Send a message on `ERROR`.
+    ///
+    /// # Arguments
+    ///
+    /// * `msg` - The message to write on `ERROR`.
+    pub fn error(&mut self, msg: &str) {
+        self.write_log(msg, Level::ERROR);
     }
 }
