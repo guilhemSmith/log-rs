@@ -15,6 +15,7 @@ pub struct Logger<'o> {
     file_options: OpenOptions,
     level_outputs: HashMap<Level, OutputKind<'o>>,
     write_buffers: HashMap<OutputKind<'o>, WriteBuffer>,
+    format: String,
 }
 
 impl<'o> Logger<'o> {
@@ -27,7 +28,7 @@ impl<'o> Logger<'o> {
     /// The new logger if the function succeeded, `None` otherwise.
     pub fn new() -> Option<Self> {
         let mut options = OpenOptions::new();
-        options.write(true).create(true);
+        options.write(true).create(true).truncate(true);
 
         let mut map_level = HashMap::new();
         map_level.insert(Level::INFO, OutputKind::STDOUT);
@@ -56,9 +57,21 @@ impl<'o> Logger<'o> {
             file_options: options,
             level_outputs: map_level,
             write_buffers: map_buffer,
+            format: String::from("[%l](%t) - %m"),
         };
 
         return Some(log);
+    }
+
+    /// Configure the format of the log.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `new_format` - The format to be used for logging message.  
+    /// Any occurrence of `%l` will be replaced by the level, `%t` by the timestamp, `%m` by the message.  
+    pub fn config_format<S: ToString + ?Sized>(&mut self, new_format: &S) {
+        self.format = new_format.to_string();
+
     }
 
     /// Configure the output of the given level.  
@@ -149,7 +162,13 @@ impl<'o> Logger<'o> {
             .write_buffers
             .get_mut(self.level_outputs.get(&level).unwrap())
         {
-            if let Err(err) = buffer.log(format!("[{}-{}]: {}\n", level, get_timestamp(), msg)) {
+            let mut log_msg = self
+                .format
+                .replace("%l", &level.to_string())
+                .replace("%t", &get_timestamp().to_string())
+                .replace("%m", msg);
+            log_msg.push('\n');
+            if let Err(err) = buffer.log(log_msg) {
                 match level {
                     Level::ERROR => {}
                     _ => self.error(&format!("Failed to log to `{}`: {}", level, err)),
