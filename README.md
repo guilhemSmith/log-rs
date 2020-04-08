@@ -1,6 +1,6 @@
 # log-rs
 
-A small logging library written in rust.  
+A small logging library.  
 Can log on 4 level: `INFO`, `DEBUG`, `WARNING`, and `ERROR`.  
 Each level can be configured to write to a specific output.  
 
